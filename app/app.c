@@ -210,19 +210,19 @@ c_entry() {
     
     // Handle DHCP fine timer (500ms)
     if (current_time - dhcp_fine_timer_ms >= DHCP_FINE_TIMER_MSECS) {
-      // Check if link is up
-      printf("Link status: %s\n", netif_is_link_up(&netif) ? "UP" : "DOWN");
+      // // Check if link is up
+      // printf("Link status: %s\n", netif_is_link_up(&netif) ? "UP" : "DOWN");
 
       dhcp_fine_timer_ms = current_time;
       dhcp_fine_tmr();
       
-      // Debug DHCP state
-      struct dhcp *dhcp = netif_dhcp_data(&netif);
-      if (dhcp) {
-        printf("DHCP state: %d\n", dhcp->state);
-      } else {
-        printf("DHCP data not found!\n");
-      }
+      // // Debug DHCP state
+      // struct dhcp *dhcp = netif_dhcp_data(&netif);
+      // if (dhcp) {
+      //   printf("DHCP state: %d\n", dhcp->state);
+      // } else {
+      //   printf("DHCP data not found!\n");
+      // }
       
       // Check if we have an address from DHCP
       if (dhcp_supplied_address(&netif)) {
