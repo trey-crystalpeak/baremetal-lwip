@@ -155,7 +155,7 @@ c_entry() {
   ip4_addr_t netmask;
   ip4_addr_t gw;
   uint64_t current_time = 0;
-  uint64_t last_time = 0;
+  // uint64_t last_time = 0;
   
   // Initialize with zeros for DHCP
   IP4_ADDR(&addr, 0, 0, 0, 0);
@@ -194,10 +194,10 @@ c_entry() {
     nr_lan91c111_check_for_events(eth0_addr, &sls, process_frames);
     
     // Get accurate time
-    if (last_time < current_time) {
-      printf("time: %llu\n", current_time);
-    }
-    last_time = current_time;
+    // if (last_time < current_time) {
+    //   printf("time: %llu\n", current_time);
+    // }
+    // last_time = current_time;
     current_time = get_elapsed_ms();
     
     // Handle DHCP fine timer (500ms)
