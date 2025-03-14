@@ -1,12 +1,11 @@
-#TOOLCHAINPATH = gcc
-TOOLCHAINPATH = /Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi
+TOOLCHAINPATH = gcc
 TOOLCHAIN = arm-none-eabi
 VERSION   = 14.2.1
-COMPILE   = $(TOOLCHAIN)-gcc
-ASSEMBLE  = $(TOOLCHAIN)-as
-ARCHIVE   = $(TOOLCHAIN)-ar
-LINKER    = $(TOOLCHAIN)-ld
-OBJCOPY   = $(TOOLCHAIN)-objcopy
+COMPILE   = ./$(TOOLCHAINPATH)/bin/$(TOOLCHAIN)-gcc
+ASSEMBLE  = ./$(TOOLCHAINPATH)/bin/$(TOOLCHAIN)-as
+ARCHIVE   = ./$(TOOLCHAINPATH)/bin/$(TOOLCHAIN)-ar
+LINKER    = ./$(TOOLCHAINPATH)/bin/$(TOOLCHAIN)-ld
+OBJCOPY   = ./$(TOOLCHAINPATH)/bin/$(TOOLCHAIN)-objcopy
 
 CPU     = arm926ej-s
 LIBC    = $(TOOLCHAINPATH)/$(TOOLCHAIN)/lib/libc.a
