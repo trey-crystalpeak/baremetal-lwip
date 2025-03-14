@@ -176,6 +176,10 @@ c_entry() {
   netif_add(&netif, &addr, &netmask, &gw, 
             NULL, netif_set_opts, netif_input);
 
+  // Initialize network hardware
+  nr_lan91c111_reset(eth0_addr, &sls, &sls);
+  nr_lan91c111_set_promiscuous(eth0_addr, &sls, 1);
+
   netif.name[0] = 'e';
   netif.name[1] = '0';
   netif_set_default(&netif);
@@ -183,10 +187,6 @@ c_entry() {
 
   // Start DHCP
   dhcp_start(&netif);
-  
-  // Initialize network hardware
-  nr_lan91c111_reset(eth0_addr, &sls, &sls);
-  nr_lan91c111_set_promiscuous(eth0_addr, &sls, 1);
 
   // Main loop with network processing
   while(1) {
@@ -202,6 +202,7 @@ c_entry() {
     
     // Handle DHCP fine timer (500ms)
     if (current_time - dhcp_fine_timer_ms >= DHCP_FINE_TIMER_MSECS) {
+      printf("DHCP fine timer\n");
       dhcp_fine_timer_ms = current_time;
       dhcp_fine_tmr();
       
@@ -218,7 +219,7 @@ c_entry() {
     }
     
     // If the interface is up but no address after a timeout, use static IP
-    if ((current_time > 10000) && netif_is_up(&netif) && ip4_addr_isany_val(*netif_ip4_addr(&netif))) {
+    if ((current_time > 30 * 1000) && netif_is_up(&netif) && ip4_addr_isany_val(*netif_ip4_addr(&netif))) {
       use_static_ip();
     }
   }
