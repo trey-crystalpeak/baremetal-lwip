@@ -8,23 +8,78 @@
 #include "lwip/timeouts.h"
 #include "eth_driver.h"
 
+// Base address of the timer peripheral on VersatilePB
+#define TIMER_BASE 0x101E2000
+
+// Timer registers offsets
+#define TIMER1_LOAD     0x00
+#define TIMER1_VALUE    0x04
+#define TIMER1_CONTROL  0x08
+#define TIMER1_INTCLR   0x0C
+
+// Timer control register bit definitions
+#define TIMER_CTRL_ENABLE       (1 << 7)
+#define TIMER_CTRL_PERIODIC     (1 << 6)
+#define TIMER_CTRL_SIZE_32      (1 << 1)  // 32-bit counter
+#define TIMER_CTRL_DIV_1        (0 << 2)  // No prescaler (1:1)
+
+// Track elapsed time for extended timing
+static volatile uint64_t ms_elapsed = 0;
+static volatile uint32_t last_check = 0;
+
+/**
+ * Initialize the timer for millisecond timing
+ *
+ * This sets up Timer1 of the SP804 dual timer with free-running
+ * mode from the maximum value.
+ */
+void timer_init(void) {
+    // Disable the timer first
+    *(volatile uint32_t *)(TIMER_BASE + TIMER1_CONTROL) = 0;
+
+    // Load the timer with maximum value
+    *(volatile uint32_t *)(TIMER_BASE + TIMER1_LOAD) = 0xFFFFFFFF;
+
+    // Initialize our tracking variables
+    ms_elapsed = 0;
+    last_check = 0xFFFFFFFF;
+
+    // Enable timer, configure for free-running mode
+    *(volatile uint32_t *)(TIMER_BASE + TIMER1_CONTROL) =
+        TIMER_CTRL_ENABLE | TIMER_CTRL_SIZE_32 | TIMER_CTRL_DIV_1;
+}
+
+/**
+ * Get elapsed time in milliseconds since timer_init was called
+ *
+ * @return Elapsed milliseconds (64-bit value that won't wrap for ~584,942 years)
+ */
+uint64_t get_elapsed_ms(void) {
+    // Get current timer value (timer counts down from 0xFFFFFFFF)
+    uint32_t current_value = *(volatile uint32_t *)(TIMER_BASE + TIMER1_VALUE);
+
+    // Check if timer wrapped around since last call
+    if (current_value > last_check) {
+        // Timer wrapped around, add remaining time from the previous cycle
+        // plus the elapsed time in the new cycle
+        uint32_t remaining = last_check;
+        uint32_t elapsed = 0xFFFFFFFF - current_value;
+
+        ms_elapsed += (remaining + elapsed) / 1000; // Convert to ms
+    } else {
+        // No wrap-around, just calculate elapsed microseconds
+        uint32_t elapsed = last_check - current_value;
+        ms_elapsed += elapsed / 1000; // Convert to ms
+    }
+
+    // Update last checked value
+    last_check = current_value;
+
+    return ms_elapsed;
+}
+
 //versatilepb maps LAN91C111 registers here
 void * const eth0_addr = (void *) 0x10010000;
-
-// VersatilePB timer registers (SP804 Timer)
-#define TIMER0_BASE       0x101E2000
-#define TIMER_LOAD        0x00    // Load register
-#define TIMER_VALUE       0x04    // Current value register
-#define TIMER_CONTROL     0x08    // Control register
-#define TIMER_INTCLR      0x0C    // Interrupt clear register
-
-// Timer control register bits
-#define TIMER_CTRL_ENABLE (1 << 7)
-#define TIMER_CTRL_PERIODIC (1 << 6)
-#define TIMER_CTRL_32BIT  (1 << 1)
-
-// Timer frequency (1MHz on VersatilePB)
-#define TIMER_FREQ_HZ     1000000
 
 s_lan91c111_state sls = {.phy_address = 0,
                          .ever_sent_packet = 0, 
@@ -78,51 +133,6 @@ netif_set_opts(struct netif *netif)
 static uint32_t dhcp_fine_timer_ms;
 static uint32_t dhcp_coarse_timer_ms;
 
-// Timer management
-static uint32_t overflow_count;
-static uint32_t last_timer_value;
-
-// Memory-mapped register access functions
-static inline void mmio_write(uint32_t addr, uint32_t val) {
-    *(volatile uint32_t*)addr = val;
-}
-
-static inline uint32_t mmio_read(uint32_t addr) {
-    return *(volatile uint32_t*)addr;
-}
-
-// Initialize the hardware timer - we use it in free-running mode
-static void timer_init(void) {
-    // Set timer to periodic mode, 32-bit counter, and enable it
-    mmio_write(TIMER0_BASE + TIMER_CONTROL, TIMER_CTRL_32BIT | TIMER_CTRL_PERIODIC | TIMER_CTRL_ENABLE);
-    
-    // Load with max value (counts down from this value)
-    mmio_write(TIMER0_BASE + TIMER_LOAD, 0xFFFFFFFF);
-    
-    // Initialize our timer tracking variables
-    overflow_count = 0;
-    last_timer_value = 0xFFFFFFFF;
-}
-
-// Get current time in milliseconds, handling timer overflow correctly
-static uint32_t get_ms_time(void) {
-    uint32_t current_value = mmio_read(TIMER0_BASE + TIMER_VALUE);
-    
-    // Detect overflow (current value is higher than last value since timer counts down)
-    if (current_value > last_timer_value) {
-        overflow_count++;
-    }
-    
-    // Update last value for next call
-    last_timer_value = current_value;
-    
-    // Calculate total microseconds: each overflow is 2^32 µs, plus the elapsed time from current cycle
-    uint64_t total_us = ((uint64_t)overflow_count << 32) + (0xFFFFFFFF - current_value);
-    
-    // Convert to milliseconds
-    return (uint32_t)(total_us / 1000);
-}
-
 // IP configuration fallback (used if DHCP fails)
 void use_static_ip(void) {
   ip4_addr_t static_addr;
@@ -156,7 +166,7 @@ c_entry() {
   printf("a\n", current_time);
   
   // Initialize DHCP timers
-  current_time = get_ms_time();
+  current_time = get_elapsed_ms();
   dhcp_fine_timer_ms = current_time;
   dhcp_coarse_timer_ms = current_time;
   printf("b\n", current_time);
@@ -186,7 +196,7 @@ c_entry() {
     
     // Get accurate time
     printf("time: %u\n", current_time);
-    current_time = get_ms_time();
+    current_time = get_elapsed_ms();
     
     // Handle DHCP fine timer (500ms)
     if (current_time - dhcp_fine_timer_ms >= DHCP_FINE_TIMER_MSECS) {
