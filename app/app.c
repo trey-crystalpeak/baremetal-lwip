@@ -153,11 +153,13 @@ c_entry() {
 
   // Initialize hardware timer
   timer_init();
+  printf("a\n", current_time);
   
   // Initialize DHCP timers
   current_time = get_ms_time();
   dhcp_fine_timer_ms = current_time;
   dhcp_coarse_timer_ms = current_time;
+  printf("b\n", current_time);
 
   lwip_init();
   
@@ -183,6 +185,7 @@ c_entry() {
     nr_lan91c111_check_for_events(eth0_addr, &sls, process_frames);
     
     // Get accurate time
+    printf("time: %u\n", current_time);
     current_time = get_ms_time();
     
     // Handle DHCP fine timer (500ms)
