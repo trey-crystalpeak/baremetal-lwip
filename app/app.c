@@ -6,6 +6,7 @@
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "lwip/timeouts.h"
+#include "lwip/tcp.h"
 #include "eth_driver.h"
 
 // Base address of the timer peripheral on VersatilePB
@@ -216,13 +217,13 @@ c_entry() {
       dhcp_fine_timer_ms = current_time;
       dhcp_fine_tmr();
       
-      // // Debug DHCP state
-      // struct dhcp *dhcp = netif_dhcp_data(&netif);
-      // if (dhcp) {
-      //   printf("DHCP state: %d\n", dhcp->state);
-      // } else {
-      //   printf("DHCP data not found!\n");
-      // }
+      // Debug DHCP state
+      struct dhcp *dhcp = netif_dhcp_data(&netif);
+      if (dhcp) {
+        printf("DHCP state: %d\n", dhcp->state);
+      } else {
+        printf("DHCP data not found!\n");
+      }
       
       // Check if we have an address from DHCP
       if (dhcp_supplied_address(&netif)) {
@@ -234,6 +235,21 @@ c_entry() {
     if (current_time - dhcp_coarse_timer_ms >= DHCP_COARSE_TIMER_SECS * 1000) {
       dhcp_coarse_timer_ms = current_time;
       dhcp_coarse_tmr();
+    }
+    
+    // Call other required LwIP timers
+    // ARP timer (5s)
+    static uint32_t arp_timer_ms = 0;
+    if (current_time - arp_timer_ms >= 5000) {
+      arp_timer_ms = current_time;
+      etharp_tmr();
+    }
+    
+    // TCP timers if needed
+    static uint32_t tcp_timer_ms = 0;
+    if (current_time - tcp_timer_ms >= 250) {
+      tcp_timer_ms = current_time;
+      tcp_tmr();
     }
     
     // If the interface is up but no address after a timeout, use static IP

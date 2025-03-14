@@ -277,6 +277,8 @@
  * LWIP_DHCP==1: Enable DHCP module.
  */
 #define LWIP_DHCP                       1
+/* Disable ACD check since it's causing our DHCP to hang */
+#define LWIP_DHCP_DOES_ACD_CHECK          0
 
 
 /*
