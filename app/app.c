@@ -184,12 +184,26 @@ c_entry() {
   netif_set_default(&netif);
   netif_set_up(&netif);
 
+  // // Explicitly set link up too
+  // netif_set_link_up(&netif);
+
+  // Check if link is up
+  printf("Link status: %s\n", netif_is_link_up(&netif) ? "UP" : "DOWN");
+
+  static struct udp_pcb *udpecho_raw_pcb;
+  udp_init();
+  udpecho_raw_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
+  udp_recv(udpecho_raw_pcb, NULL, NULL);
+  udp_bind_netif(udpecho_raw_pcb, &netif);
+
   // Start DHCP
-  if (dhcp_start(&netif) != ERR_OK) {
-    printf("DHCP start failed\n");
+  printf("Starting DHCP...\n");
+  err_t dhcp_err = dhcp_start(&netif);
+  if (dhcp_err != ERR_OK) {
+    printf("DHCP start failed with error: %d\n", dhcp_err);
     while (1) {}
   }
-  printf("DHCP started\n");
+  printf("DHCP started successfully\n");
 
   // Main loop with network processing
   while (1) {
@@ -208,6 +222,14 @@ c_entry() {
       printf("DHCP fine timer\n");
       dhcp_fine_timer_ms = current_time;
       dhcp_fine_tmr();
+      
+      // Debug DHCP state
+      struct dhcp *dhcp = netif_dhcp_data(&netif);
+      if (dhcp) {
+        printf("DHCP state: %d\n", dhcp->state);
+      } else {
+        printf("DHCP data not found!\n");
+      }
       
       // Check if we have an address from DHCP
       if (dhcp_supplied_address(&netif)) {
