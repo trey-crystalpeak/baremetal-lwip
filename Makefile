@@ -46,10 +46,12 @@ LWIP_INCS = -I lwip/src -I lwip/src/include/ -I lwip/src/api/\
             -I lwip/src/include/lwip
 vpath %.c lwip/src/api/ lwip/src/core/ lwip/src/netif/ lwip/src/core/ipv4/ $(PLATFORM_DIR) $(APP_DIR)
 
-.PHONY: all clean run lwip
+.PHONY: all setup clean run lwip
 
-all : | $(LWIP_LIB) $(BIN_TARGET)
-	mkdir -p bin
+all : | .setup $(LWIP_LIB) $(BIN_TARGET)
+
+.setup:
+	./setup.sh
 
 lwip : $(LWIP_LIB)
 
