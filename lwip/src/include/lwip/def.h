@@ -149,6 +149,11 @@ char* lwip_strnstr(const char* buffer, const char* token, size_t n);
 char* lwip_strnistr(const char* buffer, const char* token, size_t n);
 #endif
 
+#ifndef LWIP_RAND
+/* This can be #defined to the random number generator function of your platform */
+u16_t LWIP_RAND(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

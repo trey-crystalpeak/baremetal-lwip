@@ -21,6 +21,15 @@
 //#include "excalibur.h"
 //#include "plugs.h"
 #include "eth_driver.h"
+#include "lwip/def.h"
+
+/* Implementation of LWIP_RAND for random number generation */
+u16_t LWIP_RAND(void) {
+    static u32_t next = 1;
+    /* Simple linear congruential generator */
+    next = next * 1103515245 + 12345;
+    return (u16_t)((next >> 16) & 0x7FFF);
+}
 #include <stdio.h> 
 
 // +--------------------------
