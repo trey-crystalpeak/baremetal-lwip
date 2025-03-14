@@ -8,6 +8,12 @@ enum {
  
 #define UART_DR(baseaddr) (*(unsigned int *)(baseaddr))
 #define UART_FR(baseaddr) (*(((unsigned int *)(baseaddr))+6))
+
+void _exit(int status) { while (1) {} }
+
+int _kill(pid_t pid, int sig) {}
+
+int _getpid( void ) { return 0; }
  
 int _close(int file) { return -1; }
  

@@ -1723,6 +1723,12 @@ static int r_allocate_tx_packet(np_lan91c111 *e, s_lan91c111_state *sls)
   return 0;
 }
 
+int nr_lan91c111_set_irq(
+    void *hardware_base_address,
+    ns_plugs_adapter_storage *adapter_storage,
+    int irq_onoff
+);
+
 
 // The low-level transmit routine
 //

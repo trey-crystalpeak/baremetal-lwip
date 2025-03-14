@@ -1,5 +1,7 @@
+#TOOLCHAINPATH = gcc
+TOOLCHAINPATH = /Applications/ArmGNUToolchain/14.2.rel1/arm-none-eabi
 TOOLCHAIN = arm-none-eabi
-VERSION   = 7.2.1
+VERSION   = 14.2.1
 COMPILE   = $(TOOLCHAIN)-gcc
 ASSEMBLE  = $(TOOLCHAIN)-as
 ARCHIVE   = $(TOOLCHAIN)-ar
@@ -7,14 +9,14 @@ LINKER    = $(TOOLCHAIN)-ld
 OBJCOPY   = $(TOOLCHAIN)-objcopy
 
 CPU     = arm926ej-s
-LIBC    = gcc/$(TOOLCHAIN)/lib/libc.a   
-LIBGCC  = gcc/lib/gcc/$(TOOLCHAIN)/$(VERSION)/libgcc.a
-LIBCINC = gcc/$(TOOLCHAIN)/include/
+LIBC    = $(TOOLCHAINPATH)/$(TOOLCHAIN)/lib/libc.a
+LIBGCC  = $(TOOLCHAINPATH)/lib/gcc/$(TOOLCHAIN)/$(VERSION)/libgcc.a
+LIBCINC = $(TOOLCHAINPATH)/$(TOOLCHAIN)/include/
 CFLAGS  = -mcpu=$(CPU) -I $(LIBCINC) -I $(PLATFORM_DIR)
 ASFLAGS = -mcpu=$(CPU)
 QEMU    = qemu-system-arm
 QFLAGS  = -M versatilepb -m 128M -nographic
-QNET    = -net nic -net dump,file=vm0.pcap -net tap,ifname=tap0
+QNET    = -net nic,model=smc91c111 -net user
 
 BIN_DIR      = ./bin
 APP_DIR      = ./app
@@ -43,12 +45,12 @@ LWIP_OBJS = $(addprefix $(BIN_DIR)/,\
 LWIP_INCS = -I lwip/src -I lwip/src/include/ -I lwip/src/api/\
             -I lwip/src/core -I lwip/src/netif -I lwip/src/core/ipv4\
             -I lwip/src/include/lwip
-vpath %.c lwip/src/api/ lwip/src/core/ lwip/src/netif/ lwip/src/core/ipv4/\
-          $(PLATFORM_DIR) $(APP_DIR)
+vpath %.c lwip/src/api/ lwip/src/core/ lwip/src/netif/ lwip/src/core/ipv4/ $(PLATFORM_DIR) $(APP_DIR)
 
 .PHONY: all clean run lwip
 
 all : | $(LWIP_LIB) $(BIN_TARGET)
+	mkdir -p bin
 
 lwip : $(LWIP_LIB)
 

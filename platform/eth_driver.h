@@ -1,6 +1,8 @@
 #ifndef __lan91c111__
 #define __lan91c111__
 
+#include <stdint.h>
+
 typedef unsigned char r8;
 typedef unsigned short r16;
 typedef unsigned long r32;
