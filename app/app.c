@@ -173,8 +173,7 @@ c_entry() {
   lwip_init();
   
   // Add interface with empty IP addresses - will be configured by DHCP
-  netif_add(&netif, &addr, &netmask, &gw, 
-            NULL, netif_set_opts, netif_input);
+  netif_add(&netif, &addr, &netmask, &gw, NULL, netif_set_opts, netif_input);
 
   // Initialize network hardware
   nr_lan91c111_reset(eth0_addr, &sls, &sls);
@@ -186,10 +185,14 @@ c_entry() {
   netif_set_up(&netif);
 
   // Start DHCP
-  dhcp_start(&netif);
+  if (dhcp_start(&netif) != ERR_OK) {
+    printf("DHCP start failed\n");
+    while (1) {}
+  }
+  printf("DHCP started\n");
 
   // Main loop with network processing
-  while(1) {
+  while (1) {
     // Process incoming network frames
     nr_lan91c111_check_for_events(eth0_addr, &sls, process_frames);
     
