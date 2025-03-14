@@ -184,14 +184,8 @@ c_entry() {
   netif_set_default(&netif);
   netif_set_up(&netif);
 
-  // // Explicitly set link up too
-  // netif_set_link_up(&netif);
-
-  static struct udp_pcb *udpecho_raw_pcb;
-  udp_init();
-  udpecho_raw_pcb = udp_new_ip_type(IPADDR_TYPE_ANY);
-  udp_recv(udpecho_raw_pcb, NULL, NULL);
-  udp_bind_netif(udpecho_raw_pcb, &netif);
+  // Explicitly set link up too
+  netif_set_link_up(&netif);
 
   // Start DHCP
   printf("Starting DHCP...\n");
@@ -218,7 +212,7 @@ c_entry() {
     if (current_time - dhcp_fine_timer_ms >= DHCP_FINE_TIMER_MSECS) {
       // Check if link is up
       printf("Link status: %s\n", netif_is_link_up(&netif) ? "UP" : "DOWN");
-      
+
       dhcp_fine_timer_ms = current_time;
       dhcp_fine_tmr();
       
