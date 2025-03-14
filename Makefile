@@ -14,7 +14,7 @@ LIBCINC = $(TOOLCHAINPATH)/$(TOOLCHAIN)/include/
 CFLAGS  = -mcpu=$(CPU) -I $(LIBCINC) -I $(PLATFORM_DIR)
 ASFLAGS = -mcpu=$(CPU)
 QEMU    = qemu-system-arm
-QFLAGS  = -M versatilepb -m 128M -nographic
+QFLAGS  = -M versatilepb -m 128M -nographic -audio none
 QNET    = -net nic,model=smc91c111 -net user
 
 BIN_DIR      = ./bin
