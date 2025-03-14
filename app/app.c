@@ -245,12 +245,12 @@ c_entry() {
       etharp_tmr();
     }
     
-    // TCP timers if needed
-    static uint32_t tcp_timer_ms = 0;
-    if (current_time - tcp_timer_ms >= 250) {
-      tcp_timer_ms = current_time;
-      tcp_tmr();
-    }
+    // // TCP timers if needed
+    // static uint32_t tcp_timer_ms = 0;
+    // if (current_time - tcp_timer_ms >= 250) {
+    //   tcp_timer_ms = current_time;
+    //   tcp_tmr();
+    // }
     
     // If the interface is up but no address after a timeout, use static IP
     if ((current_time > 30 * 1000) && netif_is_up(&netif) && ip4_addr_isany_val(*netif_ip4_addr(&netif))) {
