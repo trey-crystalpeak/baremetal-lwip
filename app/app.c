@@ -24,7 +24,7 @@
 #define TIMER_CTRL_DIV_1        (0 << 2)  // No prescaler (1:1)
 
 // Track elapsed time for extended timing
-static volatile uint64_t ms_elapsed = 0;
+static volatile uint64_t us_elapsed = 0;
 static volatile uint32_t last_check = 0;
 
 /**
@@ -41,7 +41,7 @@ void timer_init(void) {
     *(volatile uint32_t *)(TIMER_BASE + TIMER1_LOAD) = 0xFFFFFFFF;
 
     // Initialize our tracking variables
-    ms_elapsed = 0;
+    us_elapsed = 0;
     last_check = 0xFFFFFFFF;
 
     // Enable timer, configure for free-running mode
@@ -65,17 +65,17 @@ uint64_t get_elapsed_ms(void) {
         uint32_t remaining = last_check;
         uint32_t elapsed = 0xFFFFFFFF - current_value;
 
-        ms_elapsed += (remaining + elapsed) / 1000; // Convert to ms
+        us_elapsed += remaining + elapsed;
     } else {
         // No wrap-around, just calculate elapsed microseconds
         uint32_t elapsed = last_check - current_value;
-        ms_elapsed += elapsed / 1000; // Convert to ms
+        us_elapsed += elapsed;
     }
 
     // Update last checked value
     last_check = current_value;
 
-    return ms_elapsed;
+    return us_elapsed / 1000;
 }
 
 //versatilepb maps LAN91C111 registers here
